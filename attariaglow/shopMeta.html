@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- SEO Meta Tags -->
+    <title id="metaTitle">OrchiScents | Luxury for Everyone</title>
+    <meta name="description" id="metaDescription" content="OrchiScents is your destination for premium quality impression perfumes and premium jewellery. Luxury-inspired fragrances at affordable prices.">
+    <meta name="keywords" id="metaKeywords" content="OrchiScents, impression perfumes, premium jewellery, luxury fragrances, affordable perfumes, wholesale perfumes, Pakistan">
+    <meta name="author" id="metaAuthor" content="OrchiScents">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" id="canonicalUrl" href="https://orchiscents.netlify.app/info">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" id="ogUrl" content="https://orchiscents.netlify.app/info">
+    <meta property="og:title" id="ogTitle" content="OrchiScents | About & Contact">
+    <meta property="og:description" id="ogDescription" content="Learn about OrchiScents — your trusted destination for premium impression perfumes and jewellery in Pakistan.">
+    <meta property="og:image" id="ogImage" content="image/logo.png">
+    <meta property="og:site_name" id="ogSiteName" content="OrchiScents">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" id="twitterUrl" content="https://orchiscents.netlify.app/info">
+    <meta property="twitter:title" id="twitterTitle" content="OrchiScents | About & Contact">
+    <meta property="twitter:description" id="twitterDescription" content="Learn about OrchiScents — your trusted destination for premium impression perfumes and jewellery.">
+    <meta property="twitter:image" id="twitterImage" content="image/logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" id="favicon" href="image/logo.png" type="image/png">
+    <link rel="apple-touch-icon" id="appleTouchIcon" href="image/logo.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
+
+        * {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .social-btn {
+            transition: all 0.2s ease;
+        }
+
+        .social-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.05);
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-orange-50 via-white to-amber-50 min-h-screen">
+
+    <!-- Header Banner -->
+    <div class="gradient-bg relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-32 -left-32 w-80 h-80 bg-white rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 left-1/2 w-96 h-96 bg-white rounded-full blur-3xl opacity-10"></div>
+        </div>
+        <div class="max-w-5xl mx-auto px-6 py-8 md:py-10 relative z-10">
+            <div class="flex flex-col md:flex-row items-center gap-5 md:gap-6">
+                <img id="headerLogo" src="image/logo.png" alt="OrchiScents Logo"
+                    class="w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-xl border-3 border-white/40 object-cover hover:scale-105 transition-transform duration-300"
+                    onerror="this.src='https://placehold.co/100x100?text=OS'">
+                <div class="text-center md:text-left">
+                    <h1 id="headerShopName" class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">OrchiScents</h1>
+                    <p id="headerShopTagline" class="text-orange-100 text-base md:text-lg mt-2 font-medium">Luxury for Everyone ✨</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="max-w-5xl mx-auto px-6 -mt-10 pb-16">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-orange-100 transform transition-all duration-300 hover:shadow-3xl">
+            <!-- Decorative top bar -->
+            <div class="h-2 gradient-bg"></div>
+
+            <div class="p-8 md:p-10">
+                <!-- Dynamic Page Title -->
+                <div class="mb-2">
+                    <span id="pageTitleDisplay" class="text-xs font-semibold text-orange-500 uppercase tracking-wider">Information</span>
+                </div>
+
+                <!-- Content Area -->
+                <div id="dynamicContent" class="min-h-[400px]">
+                    <!-- JS will populate -->
+                </div>
+
+                <!-- Back Button -->
+                <div class="mt-10 pt-6 border-t border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <a href="index.html" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200 font-medium hover:shadow-md">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                        Back to Shop
+                    </a>
+                    <div class="flex items-center gap-3 text-sm text-gray-400">
+                        <i class="fab fa-instagram hover:text-orange-500 cursor-pointer transition"></i>
+                        <i class="fab fa-twitter hover:text-orange-500 cursor-pointer transition"></i>
+                        <i class="fab fa-facebook hover:text-orange-500 cursor-pointer transition"></i>
+                        <span class="mx-1">|</span>
+                        <i class="far fa-heart text-orange-400"></i>
+                        <span id="footerShopNameSpan" class="text-gray-500">OrchiScents</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Note -->
+        <div class="text-center mt-8">
+            <div class="inline-flex items-center gap-3 text-gray-400 text-sm bg-white/50 backdrop-blur-sm px-5 py-2 rounded-full shadow-sm">
+                <i class="fas fa-shield-alt text-orange-400"></i>
+                <span>Secure & Trusted</span>
+                <i class="fas fa-circle text-orange-300 text-xs"></i>
+                <i class="fas fa-truck-fast text-orange-400"></i>
+                <span>Fast Delivery Worldwide</span>
+                <i class="fas fa-circle text-orange-300 text-xs"></i>
+                <i class="fas fa-headset text-orange-400"></i>
+                <span>24/7 Support</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // ============================================
+        // IMPORT SHOP META DATA
+        // ============================================
+        import { shopMeta } from './shopMetaPage.js';
+
+        console.log('✅ shopMeta loaded:', shopMeta);
+
+        // ============================================
+        // DESTRUCTURE DATA
+        // ============================================
+        const website = shopMeta.website || {};
+        const contact = shopMeta.contact || {};
+        const social = contact.social || {};
+        const about = shopMeta.about || {};
+        const privacy = shopMeta.privacyPolicy || {};
+
+        const websiteName = website.name || 'OrchiScents';
+        const tagline = website.tagline || 'Luxury for Everyone';
+        const description = website.description || '';
+        const logo = website.logo || 'image/logo.png';
+
+        // ============================================
+        // UPDATE META TAGS
+        // ============================================
+        function updateMetaTags() {
+            // Title
+            document.title = `${websiteName} | ${tagline}`;
+            const metaTitle = document.getElementById('metaTitle');
+            if (metaTitle) metaTitle.setAttribute('content', `${websiteName} | ${tagline}`);
+
+            // Description
+            const metaDescription = document.getElementById('metaDescription');
+            if (metaDescription) metaDescription.setAttribute('content', description);
+
+            // Keywords
+            const metaKeywords = document.getElementById('metaKeywords');
+            if (metaKeywords) metaKeywords.setAttribute('content', 
+                `${websiteName}, impression perfumes, premium jewellery, luxury fragrances, affordable perfumes, wholesale perfumes, Pakistan`);
+
+            // Author
+            const metaAuthor = document.getElementById('metaAuthor');
+            if (metaAuthor) metaAuthor.setAttribute('content', websiteName);
+
+            // Canonical
+            const canonical = document.getElementById('canonicalUrl');
+            if (canonical) canonical.setAttribute('href', `https://${websiteName.toLowerCase()}.netlify.app/info`);
+
+            // Open Graph
+            const ogUrl = document.getElementById('ogUrl');
+            if (ogUrl) ogUrl.setAttribute('content', `https://${websiteName.toLowerCase()}.netlify.app/info`);
+
+            const ogTitle = document.getElementById('ogTitle');
+            if (ogTitle) ogTitle.setAttribute('content', `${websiteName} | About & Contact`);
+
+            const ogDesc = document.getElementById('ogDescription');
+            if (ogDesc) ogDesc.setAttribute('content', `Learn about ${websiteName} — your trusted destination for premium impression perfumes and jewellery in Pakistan.`);
+
+            const ogImage = document.getElementById('ogImage');
+            if (ogImage) ogImage.setAttribute('content', logo);
+
+            const ogSiteName = document.getElementById('ogSiteName');
+            if (ogSiteName) ogSiteName.setAttribute('content', websiteName);
+
+            // Twitter
+            const twitterUrl = document.getElementById('twitterUrl');
+            if (twitterUrl) twitterUrl.setAttribute('content', `https://${websiteName.toLowerCase()}.netlify.app/info`);
+
+            const twitterTitle = document.getElementById('twitterTitle');
+            if (twitterTitle) twitterTitle.setAttribute('content', `${websiteName} | About & Contact`);
+
+            const twitterDesc = document.getElementById('twitterDescription');
+            if (twitterDesc) twitterDesc.setAttribute('content', `Learn about ${websiteName} — your trusted destination for premium impression perfumes and jewellery.`);
+
+            const twitterImage = document.getElementById('twitterImage');
+            if (twitterImage) twitterImage.setAttribute('content', logo);
+
+            // Favicon
+            const favicon = document.getElementById('favicon');
+            if (favicon) favicon.setAttribute('href', logo);
+
+            const appleTouch = document.getElementById('appleTouchIcon');
+            if (appleTouch) appleTouch.setAttribute('href', logo);
+        }
+
+        // ============================================
+        // UPDATE HEADER
+        // ============================================
+        function updateHeader() {
+            const headerLogo = document.getElementById('headerLogo');
+            if (headerLogo) {
+                headerLogo.src = logo;
+                headerLogo.alt = `${websiteName} Logo`;
+            }
+
+            const headerName = document.getElementById('headerShopName');
+            if (headerName) headerName.textContent = websiteName;
+
+            const headerTagline = document.getElementById('headerShopTagline');
+            if (headerTagline) headerTagline.textContent = tagline;
+        }
+
+        // ============================================
+        // ESCAPE HTML
+        // ============================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        const container = document.getElementById('dynamicContent');
+        const pageTitleDisplay = document.getElementById('pageTitleDisplay');
+        const footerShopNameSpan = document.getElementById('footerShopNameSpan');
+
+        function renderAbout() {
+            document.title = `${websiteName} | About Us | ${tagline}`;
+            if (pageTitleDisplay) pageTitleDisplay.textContent = 'About Us';
+            if (footerShopNameSpan) footerShopNameSpan.textContent = websiteName;
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-14 h-14 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-store text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800">${escapeHtml(about.title || 'About ' + websiteName)}</h2>
+                            <p class="text-orange-500 text-sm mt-1">${escapeHtml(tagline)}</p>
+                        </div>
+                    </div>
+                    <div class="prose prose-lg max-w-none text-gray-600 leading-relaxed whitespace-pre-line space-y-4">
+                        ${(about.description || description || '').split('\n\n').map(para => `<p class="mb-4">${escapeHtml(para)}</p>`).join('')}
+                    </div>
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl text-center card-hover">
+                            <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-trophy text-white text-lg"></i>
+                            </div>
+                            <p class="font-semibold text-gray-700">Quality Assured</p>
+                            <p class="text-xs text-gray-500 mt-1">Premium standards</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl text-center card-hover">
+                            <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-clock text-white text-lg"></i>
+                            </div>
+                            <p class="font-semibold text-gray-700">24/7 Support</p>
+                            <p class="text-xs text-gray-500 mt-1">Always here for you</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl text-center card-hover">
+                            <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-lock text-white text-lg"></i>
+                            </div>
+                            <p class="font-semibold text-gray-700">Secure Payments</p>
+                            <p class="text-xs text-gray-500 mt-1">100% encrypted</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPrivacy() {
+            document.title = `${websiteName} | Privacy Policy`;
+            if (pageTitleDisplay) pageTitleDisplay.textContent = 'Privacy Policy';
+            if (footerShopNameSpan) footerShopNameSpan.textContent = websiteName;
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-14 h-14 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-shield-alt text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800">${escapeHtml(privacy.title || 'Privacy Policy')}</h2>
+                            <p class="text-orange-500 text-sm mt-1">Your trust, our priority</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-6 shadow-inner">
+                        <div class="prose prose-gray max-w-none text-gray-600 leading-relaxed whitespace-pre-line">
+                            ${(privacy.content || '').split('\n\n').map(para => `<p class="mb-3">${escapeHtml(para)}</p>`).join('')}
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 bg-amber-50 p-4 rounded-xl border border-amber-200">
+                        <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                        <span>Last updated: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                        <i class="fas fa-shield-alt text-orange-500 ml-auto"></i>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderContact() {
+            document.title = `${websiteName} | Contact Us | ${tagline}`;
+            if (pageTitleDisplay) pageTitleDisplay.textContent = 'Contact Us';
+            if (footerShopNameSpan) footerShopNameSpan.textContent = websiteName;
+
+            const phone = contact.phone || '';
+            const email = contact.email || '';
+            const address = contact.address || 'Pakistan';
+            const facebookLink = social.facebook || '#';
+            const instagramLink = social.instagram || '#';
+            const whatsappLink = social.whatsapp || `https://wa.me/${phone.replace(/[^0-9+]/g, '')}`;
+            const tiktokLink = social.tiktok || '';
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-14 h-14 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-headset text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800">${escapeHtml(contact.title || 'Contact Us')}</h2>
+                            <p class="text-orange-500 text-sm mt-1">We'd love to hear from you</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-2xl card-hover border border-orange-100">
+                            <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-envelope text-white text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-1">Email Us</h3>
+                            <a href="mailto:${escapeHtml(email)}" class="text-orange-600 hover:underline break-all font-medium">${escapeHtml(email)}</a>
+                            <p class="text-gray-500 text-sm mt-2">Response within 24 hours</p>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-2xl card-hover border border-orange-100">
+                            <div class="w-12 h-12 gradient-bg rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-phone-alt text-white text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg mb-1">Call / WhatsApp</h3>
+                            <a href="tel:${escapeHtml(phone)}" class="text-orange-600 hover:underline font-medium">${escapeHtml(phone)}</a>
+                            <p class="text-gray-500 text-sm mt-2">Mon-Sat, 10AM - 8PM</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-6 border border-gray-200">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-map-marker-alt text-white"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800 mb-1">Visit Our Showroom</p>
+                                <p class="text-gray-600 leading-relaxed">${escapeHtml(address)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg">
+                            <i class="fab fa-facebook-messenger text-blue-500"></i> Connect With Us
+                        </h3>
+                        <div class="flex flex-wrap gap-3">
+                            ${facebookLink !== '#' ? `
+                                <a href="${facebookLink}" target="_blank" class="social-btn flex items-center gap-2 px-5 py-2.5 bg-[#1877F2] text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium">
+                                    <i class="fab fa-facebook-f"></i> Facebook
+                                </a>
+                            ` : ''}
+                            ${instagramLink !== '#' ? `
+                                <a href="${instagramLink}" target="_blank" class="social-btn flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium">
+                                    <i class="fab fa-instagram"></i> Instagram
+                                </a>
+                            ` : ''}
+                            ${whatsappLink !== '#' ? `
+                                <a href="${whatsappLink}" target="_blank" class="social-btn flex items-center gap-2 px-5 py-2.5 bg-[#25D366] text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium">
+                                    <i class="fab fa-whatsapp"></i> WhatsApp
+                                </a>
+                            ` : ''}
+                            ${tiktokLink ? `
+                                <a href="${tiktokLink}" target="_blank" class="social-btn flex items-center gap-2 px-5 py-2.5 bg-[#000000] text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium">
+                                    <i class="fab fa-tiktok"></i> TikTok
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDefault() {
+            document.title = `${websiteName} | ${tagline}`;
+            if (pageTitleDisplay) pageTitleDisplay.textContent = 'Information';
+            if (footerShopNameSpan) footerShopNameSpan.textContent = websiteName;
+
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <div class="w-24 h-24 gradient-bg rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-compass text-white text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-700">Page Not Found</h2>
+                    <p class="text-gray-500 mt-2">The requested information page does not exist.</p>
+                    <a href="index.html" class="inline-flex items-center gap-2 mt-6 px-6 py-3 gradient-bg text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium">
+                        <i class="fas fa-arrow-left"></i> Return to Shop
+                    </a>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        function init() {
+            // Update meta tags and header
+            updateMetaTags();
+            updateHeader();
+
+            // Get page parameter
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page');
+
+            // Render based on page
+            switch (page) {
+                case 'about':
+                    renderAbout();
+                    break;
+                case 'privacy':
+                    renderPrivacy();
+                    break;
+                case 'contact':
+                    renderContact();
+                    break;
+                default:
+                    renderDefault();
+                    break;
+            }
+
+            console.log(`✅ Page rendered: ${page || 'default'}`);
+        }
+
+        // Run initialization
+        init();
+    </script>
+
+</body>
+
+</html>
