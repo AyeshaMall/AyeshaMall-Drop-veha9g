@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <title>AyeshaMall · Pro Data Manager</title>
+    <meta name="description" content="Full control: images, videos, products, ribbons, carousel, socials." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>" />
+
+    <!-- Firebase (optional) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        window.firebaseModules = { initializeApp, getFirestore, doc, setDoc, getDoc };
+    </script>
+
+    <!-- Dexie -->
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <style>
+        body {
+            background: #f1f5f9;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            transition: 0.2s;
+            box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.15);
+        }
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast-notify.show {
+            opacity: 1;
+        }
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .preview-grid img,
+        .preview-grid video {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #cbd5e1;
+            background: #e2e8f0;
+        }
+        .product-card {
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+        .file-input-wrap {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrap input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .watermark-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 8px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        .media-item {
+            position: relative;
+            display: inline-block;
+        }
+        .unsaved-indicator {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- HEADER -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-gray-200 mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-2xl">🛍️</div>
+                <div>
+                    <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-700 to-purple-600 bg-clip-text text-transparent">AyeshaMall · Pro</h1>
+                    <p class="text-gray-500 text-sm">Images, videos, product variants, social accounts — all in one</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button id="importCloudBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2"><i class="fas fa-cloud-download-alt"></i> Import</button>
+                <button id="syncCloudBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2"><i class="fas fa-cloud-upload-alt"></i> Sync</button>
+            </div>
+        </div>
+
+        <!-- GRID: left (core) + right (media & products) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- LEFT COLUMN -->
+            <div class="space-y-6">
+
+                <!-- WEBSITE + SEO + LOGO UPLOAD -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6 space-y-3">
+                    <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-globe text-indigo-500 mr-2"></i>Website & SEO</h2>
+                    <div><label class="block text-sm font-semibold">Site Name</label><input type="text" id="site_name" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Tagline</label><input type="text" id="site_tagline" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Description (meta)</label><textarea id="site_desc" rows="2" class="w-full border rounded-lg px-4 py-2"></textarea></div>
+                    <div>
+                        <label class="block text-sm font-semibold">Logo</label>
+                        <div class="flex gap-3 items-center">
+                            <input type="text" id="site_logo" class="flex-1 border rounded-lg px-4 py-2" placeholder="URL or blob://" value="https://ayesha-mall.netlify.app/image/logo.png" />
+                            <div class="file-input-wrap bg-gray-200 px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-gray-300">
+                                <i class="fas fa-upload mr-1"></i> Upload
+                                <input type="file" accept="image/*" id="logoUpload" />
+                            </div>
+                        </div>
+                        <div id="logoPreview" class="mt-2"></div>
+                    </div>
+                    <div><label class="block text-sm font-semibold">Favicon URL</label><input type="text" id="site_favicon" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">OG Image</label><input type="text" id="site_ogimage" class="w-full border rounded-lg px-4 py-2" /></div>
+                </div>
+
+                <!-- ABOUT + CONTACT + SOCIAL ACCOUNTS -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6 space-y-3">
+                    <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-address-card text-purple-500 mr-2"></i>About & Social</h2>
+                    <div><label class="block text-sm font-semibold">About Title</label><input type="text" id="about_title" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">About Description</label><textarea id="about_desc" rows="2" class="w-full border rounded-lg px-4 py-2"></textarea></div>
+                    <div><label class="block text-sm font-semibold">Contact Title</label><input type="text" id="contact_title" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Email</label><input type="email" id="contact_email" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Phone</label><input type="text" id="contact_phone" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Address</label><input type="text" id="contact_address" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="text-xs">Facebook</label><input type="url" id="social_fb" class="w-full border rounded-lg px-2 py-1 text-sm" /></div>
+                        <div><label class="text-xs">Instagram</label><input type="url" id="social_ig" class="w-full border rounded-lg px-2 py-1 text-sm" /></div>
+                        <div><label class="text-xs">WhatsApp</label><input type="url" id="social_wa" class="w-full border rounded-lg px-2 py-1 text-sm" /></div>
+                        <div><label class="text-xs">YouTube</label><input type="url" id="social_yt" class="w-full border rounded-lg px-2 py-1 text-sm" /></div>
+                    </div>
+                </div>
+
+                <!-- PRIVACY -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6 space-y-2">
+                    <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-shield-alt text-green-600 mr-2"></i>Privacy Policy</h2>
+                    <div><label class="block text-sm font-semibold">Title</label><input type="text" id="privacy_title" class="w-full border rounded-lg px-4 py-2" /></div>
+                    <div><label class="block text-sm font-semibold">Content</label><textarea id="privacy_content" rows="2" class="w-full border rounded-lg px-4 py-2"></textarea></div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="space-y-6">
+
+                <!-- RIBBONS -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-ribbon text-rose-500 mr-2"></i>Ribbons</h2>
+                        <button id="addRibbonBtn" class="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-full hover:bg-rose-200"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div id="ribbonsContainer" class="space-y-2"></div>
+                    <div id="ribbonPreview" class="flex flex-wrap gap-2 mt-2"></div>
+                </div>
+
+                <!-- CAROUSEL (banners with upload) -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-images text-blue-500 mr-2"></i>Carousel Banners</h2>
+                        <div class="flex gap-2">
+                            <button id="addCarouselBtn" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200"><i class="fas fa-plus"></i> URL</button>
+                            <div class="file-input-wrap text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 cursor-pointer">
+                                <i class="fas fa-upload"></i> Upload
+                                <input type="file" accept="image/*" id="carouselUpload" multiple />
+                            </div>
+                        </div>
+                    </div>
+                    <div id="carouselContainer" class="space-y-2"></div>
+                    <div id="carouselPreview" class="preview-grid mt-2"></div>
+                </div>
+
+                <!-- PRODUCTS (enhanced) -->
+                <div class="bg-white rounded-2xl shadow-md border card-hover p-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-boxes text-amber-500 mr-2"></i>Products</h2>
+                        <button id="addProductBtn" class="text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full hover:bg-amber-200"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div id="productsContainer" class="space-y-4 max-h-96 overflow-y-auto pr-1"></div>
+                    <div id="productsPreview" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="mt-10 flex flex-wrap gap-4 justify-center border-t pt-8">
+            <button id="saveLocalBtn" class="bg-slate-800 hover:bg-black text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i class="fas fa-database"></i> 💾 Save to IndexedDB</button>
+            <button id="exportBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i class="fas fa-file-export"></i> 📄 Export JS</button>
+            <button id="resetBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i class="fas fa-undo-alt"></i> Reset</button>
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="mt-8 bg-gray-900 rounded-2xl p-5 text-gray-200 overflow-auto">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-mono text-gray-400"><i class="fas fa-code mr-2"></i>Full Data Snapshot</span>
+                <span id="statusBadge" class="text-xs bg-gray-700 px-2 py-1 rounded-full">ready</span>
+            </div>
+            <pre id="livePreview" class="text-xs font-mono whitespace-pre-wrap break-words bg-gray-800 p-3 rounded-lg max-h-80 overflow-auto">Loading...</pre>
+        </div>
+    </div>
+
+    <div id="toast" class="toast-notify"></div>
+
+    <script type="module">
+        // ================================================================
+        // 1. DEFAULT DATA (extended)
+        // ================================================================
+        const DEFAULT_DATA = {
+            website: {
+                name: "8th Wonder Bazaar",
+                tagline: "Where Every Purchase is a Wonder ✨",
+                description: "Premium shopping, curated collections.",
+                logo: "https://ayesha-mall.netlify.app/image/logo.png",
+                favicon: "",
+                ogimage: ""
+            },
+            about: { title: "✨ About Us", description: "We deliver quality with passion." },
+            contact: {
+                title: "📞 Contact",
+                email: "support@shop.com",
+                phone: "+92-300-0000000",
+                address: "Karachi, Pakistan",
+                social: { facebook: "", instagram: "", whatsapp: "", youtube: "" }
+            },
+            privacyPolicy: { title: "🔒 Privacy", content: "Your data is safe with us." },
+            ribbons: ["✨ New", "🔥 Bestseller", "💎 Limited"],
+            carousel: [],
+            products: []
+        };
+
+        // ================================================================
+        // 2. IndexedDB with blob support (Dexie) + folder structure
+        // ================================================================
+        const db = new Dexie("AyeshaMallProDB");
+        db.version(1).stores({
+            shopMeta: "id, updatedAt",
+            files: "id, folder" // store blobs: id = path, folder = 'images/' or 'videos/'
+        });
+
+        async function loadFromDB() {
+            let record = await db.shopMeta.get('main');
+            if (!record || !record.data) {
+                const def = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                await db.shopMeta.put({ id: 'main', data: def, updatedAt: Date.now() });
+                return def;
+            }
+            return record.data;
+        }
+
+        // Store file with folder and watermark
+        async function storeFile(blob, name, folder = 'images/') {
+            // Validate video
+            if (blob.type.startsWith('video/')) {
+                const sizeMB = blob.size / (1024 * 1024);
+                if (sizeMB > 2) {
+                    showToast('❌ Video size exceeds 2MB limit', 3000);
+                    throw new Error('Video too large');
+                }
+                // Validate duration (7-30 sec)
+                const dur = await getVideoDuration(blob);
+                if (dur < 7 || dur > 30) {
+                    showToast(`❌ Video duration ${dur}s must be between 7-30s`, 3000);
+                    throw new Error('Invalid duration');
+                }
+            }
+
+            // Apply watermark and store
+            const watermarkedBlob = await applyWatermark(blob, folder);
+            const id = folder + Date.now() + '_' + name;
+            await db.files.put({ id, blob: watermarkedBlob, name, type: blob.type, folder });
+            return id;
+        }
+
+        async function getVideoDuration(blob) {
+            return new Promise((resolve) => {
+                const url = URL.createObjectURL(blob);
+                const video = document.createElement('video');
+                video.onloadedmetadata = () => {
+                    resolve(video.duration);
+                    URL.revokeObjectURL(url);
+                };
+                video.onerror = () => resolve(0);
+                video.src = url;
+            });
+        }
+
+        async function applyWatermark(blob, folder) {
+            return new Promise((resolve) => {
+                const url = URL.createObjectURL(blob);
+                const isVideo = blob.type.startsWith('video/');
+                const media = document.createElement(isVideo ? 'video' : 'img');
+                media.onload = media.onloadedmetadata = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = media.videoWidth || media.width;
+                    canvas.height = media.videoHeight || media.height;
+                    ctx.drawImage(media, 0, 0, canvas.width, canvas.height);
+
+                    // Watermark: "AyeshaMall@shopName"
+                    const text = 'AyeshaMall@8thWonder';
+                    ctx.font = 'bold 16px sans-serif';
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 6;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(text, canvas.width - 10, canvas.height - 8);
+
+                    canvas.toBlob((b) => {
+                        resolve(b);
+                        URL.revokeObjectURL(url);
+                    }, blob.type);
+                };
+                media.onerror = () => resolve(blob);
+                if (isVideo) {
+                    media.src = url;
+                    media.load();
+                } else {
+                    media.src = url;
+                }
+            });
+        }
+
+        async function getBlobURL(id) {
+            const entry = await db.files.get(id);
+            if (!entry) return null;
+            return URL.createObjectURL(entry.blob);
+        }
+
+        // ================================================================
+        // 3. DOM refs
+        // ================================================================
+        const $ = id => document.getElementById(id);
+        const ribbonsContainer = $('ribbonsContainer');
+        const ribbonPreview = $('ribbonPreview');
+        const carouselContainer = $('carouselContainer');
+        const carouselPreview = $('carouselPreview');
+        const productsContainer = $('productsContainer');
+        const productsPreview = $('productsPreview');
+        const livePreview = $('livePreview');
+        const statusBadge = $('statusBadge');
+
+        // Store product data globally
+        let productData = [];
+        let workingData = null; // Current working copy
+
+        // ================================================================
+        // 4. Render functions
+        // ================================================================
+        function renderRibbons(ribbons) {
+            ribbonsContainer.innerHTML = ribbons.map((t, i) =>
+                `<div class="flex gap-2 items-center">
+                    <input type="text" value="${t.replace(/"/g, '&quot;')}" data-idx="${i}" class="ribbon-input w-full border rounded-lg px-3 py-1 text-sm" />
+                    <button data-idx="${i}" class="remove-ribbon text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                </div>`
+            ).join('');
+            ribbonPreview.innerHTML = ribbons.map(r => `<span class="bg-gray-200 px-3 py-1 rounded-full text-sm">${r}</span>`).join('');
+            document.querySelectorAll('.remove-ribbon').forEach(btn => btn.onclick = () => {
+                const idx = +btn.dataset.idx;
+                const meta = gatherAll();
+                meta.ribbons.splice(idx, 1);
+                populateAll(meta);
+            });
+            document.querySelectorAll('.ribbon-input').forEach(inp => inp.oninput = () => {
+                const meta = gatherAll();
+                meta.ribbons[+inp.dataset.idx] = inp.value;
+                updateLivePreview(meta);
+                markUnsaved();
+            });
+        }
+
+        function renderCarousel(images) {
+            carouselContainer.innerHTML = images.map((url, i) =>
+                `<div class="flex gap-2 items-center">
+                    <input type="text" value="${url}" data-idx="${i}" class="carousel-input w-full border rounded-lg px-3 py-1 text-sm" placeholder="URL or blob://" />
+                    <button data-idx="${i}" class="remove-carousel text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                </div>`
+            ).join('');
+            Promise.all(images.map(async u => {
+                if (u.startsWith('images/') || u.startsWith('videos/')) {
+                    const url = await getBlobURL(u);
+                    return url ? `<div class="media-item"><img src="${url}" /><span class="watermark-badge">AyeshaMall</span></div>` :
+                        `<div class="w-20 h-16 bg-gray-300 rounded"></div>`;
+                }
+                return `<div class="media-item"><img src="${u}" /><span class="watermark-badge">AyeshaMall</span></div>`;
+            })).then(imgs => {
+                carouselPreview.innerHTML = imgs.join('');
+            });
+            document.querySelectorAll('.remove-carousel').forEach(btn => btn.onclick = () => {
+                const idx = +btn.dataset.idx;
+                const meta = gatherAll();
+                meta.carousel.splice(idx, 1);
+                populateAll(meta);
+            });
+            document.querySelectorAll('.carousel-input').forEach(inp => inp.oninput = () => {
+                const meta = gatherAll();
+                meta.carousel[+inp.dataset.idx] = inp.value;
+                updateLivePreview(meta);
+                markUnsaved();
+            });
+        }
+
+        function renderProducts(products) {
+            productData = products;
+
+            productsContainer.innerHTML = products.map((p, i) => `
+                <div class="product-card space-y-2">
+                    <div class="flex gap-2 items-start">
+                        <div class="flex-1 grid grid-cols-2 gap-1">
+                            <input type="text" value="${p.title || ''}" data-idx="${i}" data-field="title" class="product-input border rounded px-2 py-1 text-sm" placeholder="Title" />
+                            <input type="text" value="${p.price || ''}" data-idx="${i}" data-field="price" class="product-input border rounded px-2 py-1 text-sm" placeholder="Price" />
+                            <input type="text" value="${p.sellPrice || ''}" data-idx="${i}" data-field="sellPrice" class="product-input border rounded px-2 py-1 text-sm" placeholder="Sell Price" />
+                            <input type="text" value="${p.color || ''}" data-idx="${i}" data-field="color" class="product-input border rounded px-2 py-1 text-sm" placeholder="Color" />
+                            <input type="text" value="${p.material || ''}" data-idx="${i}" data-field="material" class="product-input border rounded px-2 py-1 text-sm" placeholder="Material" />
+                            <input type="text" value="${p.highlights || ''}" data-idx="${i}" data-field="highlights" class="product-input border rounded px-2 py-1 text-sm" placeholder="Highlights (comma)" />
+                            <input type="text" value="${p.tags || ''}" data-idx="${i}" data-field="tags" class="product-input border rounded px-2 py-1 text-sm" placeholder="Tags (comma)" />
+                            <input type="text" value="${p.keys || ''}" data-idx="${i}" data-field="keys" class="product-input border rounded px-2 py-1 text-sm" placeholder="Keys (comma)" />
+                        </div>
+                        <button data-idx="${i}" class="remove-product text-red-400 hover:text-red-600 mt-1"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div><textarea data-idx="${i}" data-field="description" class="product-input w-full border rounded px-2 py-1 text-sm" rows="2" placeholder="Description">${p.description || ''}</textarea></div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-xs font-semibold text-gray-600">Images (max 30):</span>
+                        <div class="flex flex-wrap gap-1" id="productImages_${i}">
+                            ${(p.images || []).map(img => `<div class="media-item"><img src="${img.startsWith('images/') ? '' : img}" class="w-10 h-10 object-cover rounded border" /><span class="watermark-badge">AyeshaMall</span><span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center cursor-pointer" data-pidx="${i}" data-img="${img}">×</span></div>`).join('')}
+                        </div>
+                        <div class="file-input-wrap bg-gray-200 px-2 py-1 rounded text-xs cursor-pointer hover:bg-gray-300">
+                            <i class="fas fa-upload"></i> Upload
+                            <input type="file" accept="image/*" multiple class="productImageUpload" data-pidx="${i}" />
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-xs font-semibold text-gray-600">Videos (7-30s, ≤2MB):</span>
+                        <div class="flex flex-wrap gap-1" id="productVideos_${i}">
+                            ${(p.videos || []).map(v => `<div class="media-item"><video src="${v.startsWith('videos/') ? '' : v}" class="w-10 h-10 object-cover rounded border" /><span class="watermark-badge">AyeshaMall</span><span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center cursor-pointer" data-pidx="${i}" data-vid="${v}">×</span></div>`).join('')}
+                        </div>
+                        <div class="file-input-wrap bg-gray-200 px-2 py-1 rounded text-xs cursor-pointer hover:bg-gray-300">
+                            <i class="fas fa-upload"></i> Upload
+                            <input type="file" accept="video/*" multiple class="productVideoUpload" data-pidx="${i}" />
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            productsPreview.innerHTML = products.map(p => `
+                <div class="bg-gray-100 p-2 rounded-lg text-center">
+                    ${p.images && p.images.length ? `<img src="${p.images[0].startsWith('images/') ? '' : p.images[0]}" class="w-full h-16 object-cover rounded" />` : `<div class="w-full h-16 bg-gray-300 rounded"></div>`}
+                    <div class="font-semibold text-sm">${p.title || 'Untitled'}</div>
+                    <div class="text-xs">${p.price || ''} ${p.sellPrice ? '→ '+p.sellPrice : ''}</div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.product-input').forEach(inp => inp.oninput = () => {
+                const idx = +inp.dataset.idx;
+                const field = inp.dataset.field;
+                if (productData[idx]) {
+                    productData[idx][field] = inp.value;
+                }
+                const meta = gatherAll();
+                updateLivePreview(meta);
+                markUnsaved();
+            });
+            
+            document.querySelectorAll('.remove-product').forEach(btn => btn.onclick = () => {
+                const idx = +btn.dataset.idx;
+                const meta = gatherAll();
+                meta.products.splice(idx, 1);
+                productData = meta.products;
+                populateAll(meta);
+                markUnsaved();
+            });
+
+            document.querySelectorAll('.productImageUpload').forEach(input => {
+                input.onchange = async (e) => {
+                    const pidx = +input.dataset.pidx;
+                    const files = e.target.files;
+                    const meta = gatherAll();
+                    if (!meta.products[pidx].images) meta.products[pidx].images = [];
+                    for (const f of files) {
+                        try {
+                            const id = await storeFile(f, f.name, 'images/');
+                            meta.products[pidx].images.push(id);
+                            productData[pidx].images = meta.products[pidx].images;
+                        } catch (err) { /* error already shown */ }
+                    }
+                    populateAll(meta);
+                    markUnsaved();
+                    input.value = '';
+                };
+            });
+            
+            document.querySelectorAll('.productVideoUpload').forEach(input => {
+                input.onchange = async (e) => {
+                    const pidx = +input.dataset.pidx;
+                    const files = e.target.files;
+                    const meta = gatherAll();
+                    if (!meta.products[pidx].videos) meta.products[pidx].videos = [];
+                    for (const f of files) {
+                        try {
+                            const id = await storeFile(f, f.name, 'videos/');
+                            meta.products[pidx].videos.push(id);
+                            productData[pidx].videos = meta.products[pidx].videos;
+                        } catch (err) { /* error already shown */ }
+                    }
+                    populateAll(meta);
+                    markUnsaved();
+                    input.value = '';
+                };
+            });
+            
+            document.querySelectorAll('[data-img]').forEach(el => {
+                el.onclick = () => {
+                    const pidx = +el.dataset.pidx;
+                    const img = el.dataset.img;
+                    const meta = gatherAll();
+                    meta.products[pidx].images = meta.products[pidx].images.filter(i => i !== img);
+                    productData[pidx].images = meta.products[pidx].images;
+                    populateAll(meta);
+                    markUnsaved();
+                };
+            });
+            
+            document.querySelectorAll('[data-vid]').forEach(el => {
+                el.onclick = () => {
+                    const pidx = +el.dataset.pidx;
+                    const vid = el.dataset.vid;
+                    const meta = gatherAll();
+                    meta.products[pidx].videos = meta.products[pidx].videos.filter(v => v !== vid);
+                    productData[pidx].videos = meta.products[pidx].videos;
+                    populateAll(meta);
+                    markUnsaved();
+                };
+            });
+        }
+
+        // ================================================================
+        // 5. Core gather / populate
+        // ================================================================
+        function gatherAll() {
+            const productCards = document.querySelectorAll('.product-card');
+            const products = [];
+            
+            productCards.forEach((card, idx) => {
+                const inputs = card.querySelectorAll('.product-input');
+                const obj = { id: idx + 1 };
+                inputs.forEach(inp => {
+                    obj[inp.dataset.field] = inp.value;
+                });
+                if (productData[idx]) {
+                    obj.images = productData[idx].images || [];
+                    obj.videos = productData[idx].videos || [];
+                } else {
+                    obj.images = [];
+                    obj.videos = [];
+                }
+                products.push(obj);
+            });
+
+            return {
+                website: {
+                    name: $('site_name').value,
+                    tagline: $('site_tagline').value,
+                    description: $('site_desc').value,
+                    logo: $('site_logo').value,
+                    favicon: $('site_favicon').value,
+                    ogimage: $('site_ogimage').value
+                },
+                about: { 
+                    title: $('about_title').value, 
+                    description: $('about_desc').value 
+                },
+                contact: {
+                    title: $('contact_title').value,
+                    email: $('contact_email').value,
+                    phone: $('contact_phone').value,
+                    address: $('contact_address').value,
+                    social: {
+                        facebook: $('social_fb').value,
+                        instagram: $('social_ig').value,
+                        whatsapp: $('social_wa').value,
+                        youtube: $('social_yt').value
+                    }
+                },
+                privacyPolicy: { 
+                    title: $('privacy_title').value, 
+                    content: $('privacy_content').value 
+                },
+                ribbons: Array.from(document.querySelectorAll('.ribbon-input')).map(inp => inp.value),
+                carousel: Array.from(document.querySelectorAll('.carousel-input')).map(inp => inp.value),
+                products: products
+            };
+        }
+
+        function populateAll(meta) {
+            productData = meta.products || [];
+            
+            $('site_name').value = meta.website?.name || '';
+            $('site_tagline').value = meta.website?.tagline || '';
+            $('site_desc').value = meta.website?.description || '';
+            $('site_logo').value = meta.website?.logo || '';
+            $('site_favicon').value = meta.website?.favicon || '';
+            $('site_ogimage').value = meta.website?.ogimage || '';
+            $('about_title').value = meta.about?.title || '';
+            $('about_desc').value = meta.about?.description || '';
+            $('contact_title').value = meta.contact?.title || '';
+            $('contact_email').value = meta.contact?.email || '';
+            $('contact_phone').value = meta.contact?.phone || '';
+            $('contact_address').value = meta.contact?.address || '';
+            $('social_fb').value = meta.contact?.social?.facebook || '';
+            $('social_ig').value = meta.contact?.social?.instagram || '';
+            $('social_wa').value = meta.contact?.social?.whatsapp || '';
+            $('social_yt').value = meta.contact?.social?.youtube || '';
+            $('privacy_title').value = meta.privacyPolicy?.title || '';
+            $('privacy_content').value = meta.privacyPolicy?.content || '';
+            
+            renderRibbons(meta.ribbons || []);
+            renderCarousel(meta.carousel || []);
+            renderProducts(meta.products || []);
+            updateLivePreview(meta);
+            
+            // logo preview
+            const logoVal = meta.website?.logo || '';
+            if (logoVal.startsWith('images/')) {
+                getBlobURL(logoVal).then(url => {
+                    if (url) $('logoPreview').innerHTML = `<div class="media-item"><img src="${url}" class="w-16 h-16 object-cover rounded border" /><span class="watermark-badge">AyeshaMall</span></div>`;
+                });
+            } else if (logoVal) {
+                $('logoPreview').innerHTML = `<div class="media-item"><img src="${logoVal}" class="w-16 h-16 object-cover rounded border" /><span class="watermark-badge">AyeshaMall</span></div>`;
+            } else {
+                $('logoPreview').innerHTML = '';
+            }
+            
+            statusBadge.innerHTML = '📀 Loaded';
+            statusBadge.className = 'text-xs bg-gray-700 px-2 py-1 rounded-full';
+        }
+
+        function updateLivePreview(meta) {
+            livePreview.textContent = JSON.stringify(meta, null, 2);
+        }
+
+        function markUnsaved() {
+            statusBadge.innerHTML = '⚠️ Unsaved changes';
+            statusBadge.className = 'text-xs bg-yellow-500 text-black px-2 py-1 rounded-full';
+        }
+
+        // ================================================================
+        // 6. Save / Reset / Export / Cloud
+        // ================================================================
+        async function saveToDB() {
+            const meta = gatherAll();
+            await db.shopMeta.put({ id: 'main', data: meta, updatedAt: Date.now() });
+            statusBadge.innerHTML = `✅ Saved ${new Date().toLocaleTimeString()}`;
+            statusBadge.className = 'text-xs bg-green-600 text-white px-2 py-1 rounded-full';
+            showToast('💾 Saved to IndexedDB');
+        }
+
+        async function resetToDefault() {
+            const def = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            productData = def.products || [];
+            populateAll(def);
+            await db.shopMeta.put({ id: 'main', data: def, updatedAt: Date.now() });
+            statusBadge.innerHTML = '🔄 Reset';
+            statusBadge.className = 'text-xs bg-gray-700 px-2 py-1 rounded-full';
+            showToast('✨ Reset to default');
+        }
+
+        function exportJS() {
+            const meta = gatherAll();
+            const blob = new Blob([`export const shopMeta = ${JSON.stringify(meta, null, 2)};`], { type: 'application/javascript' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'shopMeta.js';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast('📁 Exported');
+        }
+
+        // ================================================================
+        // 7. Firebase (optional)
+        // ================================================================
+        let firestoreDb = null;
+        const FB_CONFIG = { apiKey: "AIzaSyDummy", authDomain: "demo.firebaseapp.com", projectId: "demo" };
+        async function initFirebase() {
+            try {
+                const { initializeApp, getFirestore } = window.firebaseModules;
+                firestoreDb = getFirestore(initializeApp(FB_CONFIG));
+                return true;
+            } catch { return false; }
+        }
+        async function syncCloud() {
+            if (!firestoreDb && !await initFirebase()) { showToast('❌ Firebase unavailable', 3000); return; }
+            try {
+                const { setDoc, doc } = window.firebaseModules;
+                await setDoc(doc(firestoreDb, 'shopMeta', 'config'), { data: gatherAll(), updated: new Date().toISOString() });
+                showToast('☁️ Synced');
+            } catch (e) { showToast('Sync error', 3000); }
+        }
+        async function importCloud() {
+            if (!firestoreDb && !await initFirebase()) { showToast('❌ Firebase unavailable', 3000); return; }
+            try {
+                const { getDoc, doc } = window.firebaseModules;
+                const snap = await getDoc(doc(firestoreDb, 'shopMeta', 'config'));
+                if (snap.exists()) {
+                    const data = snap.data().data;
+                    productData = data.products || [];
+                    populateAll(data);
+                    await db.shopMeta.put({ id: 'main', data, updatedAt: Date.now() });
+                    showToast('🌥️ Imported');
+                } else showToast('No cloud doc', 3000);
+            } catch (e) { showToast('Import error', 3000); }
+        }
+
+        // ================================================================
+        // 8. Toast
+        // ================================================================
+        function showToast(msg, dur = 2500) {
+            const t = $('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), dur);
+        }
+
+        // ================================================================
+        // 9. Bootstrap
+        // ================================================================
+        async function bootstrap() {
+            await initFirebase();
+            const data = await loadFromDB();
+            productData = data.products || [];
+            populateAll(data);
+
+            $('addRibbonBtn').onclick = () => { 
+                const m = gatherAll();
+                m.ribbons.push('New');
+                populateAll(m);
+                markUnsaved();
+            };
+            
+            $('addCarouselBtn').onclick = () => { 
+                const m = gatherAll();
+                m.carousel.push('https://picsum.photos/seed/' + Date.now() + '/800/300');
+                populateAll(m);
+                markUnsaved();
+            };
+            
+            $('addProductBtn').onclick = () => {
+                const m = gatherAll();
+                const newProduct = { 
+                    id: Date.now(), 
+                    title: 'New Product', 
+                    price: '$0', 
+                    sellPrice: '', 
+                    description: '',
+                    color: '', 
+                    material: '', 
+                    highlights: '', 
+                    tags: '', 
+                    keys: '', 
+                    images: [], 
+                    videos: [] 
+                };
+                m.products.push(newProduct);
+                productData = m.products;
+                populateAll(m);
+                markUnsaved();
+            };
+
+            $('logoUpload').onchange = async (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                try {
+                    const id = await storeFile(f, f.name, 'images/');
+                    const meta = gatherAll();
+                    meta.website.logo = id;
+                    populateAll(meta);
+                    markUnsaved();
+                } catch (err) { /* handled */ }
+                $('logoUpload').value = '';
+            };
+
+            $('carouselUpload').onchange = async (e) => {
+                const files = e.target.files;
+                const meta = gatherAll();
+                for (const f of files) {
+                    try {
+                        const id = await storeFile(f, f.name, 'images/');
+                        meta.carousel.push(id);
+                    } catch (err) { /* handled */ }
+                }
+                populateAll(meta);
+                markUnsaved();
+                $('carouselUpload').value = '';
+            };
+
+            $('saveLocalBtn').onclick = saveToDB;
+            $('resetBtn').onclick = resetToDefault;
+            $('exportBtn').onclick = exportJS;
+            $('syncCloudBtn').onclick = syncCloud;
+            $('importCloudBtn').onclick = importCloud;
+
+            // Only update preview, don't save to DB
+            document.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => {
+                    const meta = gatherAll();
+                    updateLivePreview(meta);
+                    if (el.closest('.product-card') || el.id.includes('site_') || el.id.includes('about_') || 
+                        el.id.includes('contact_') || el.id.includes('social_') || el.id.includes('privacy_')) {
+                        markUnsaved();
+                    }
+                });
+            });
+        }
+
+        bootstrap().catch(console.error);
+    </script>
+</body>
+
+</html>
