@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AyeshaMall · Custom Website Data Manager</title>
+    <!-- Firebase SDKs (modular, v9+) -->
+    <script type="module">
+        // Import Firebase modules dynamically (will be used after initialization)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Expose to window so inline scripts can use them
+        window.firebaseModules = { initializeApp, getFirestore, doc, setDoc, getDoc };
+    </script>
+    <!-- Dexie (IndexedDB wrapper) for instant queries -->
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <!-- Tailwind for sleek UI + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background: #f9fafb;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+            box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .transition-smooth {
+            transition: all 0.2s ease;
+        }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            background: #1f2937;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        textarea,
+        input,
+        select {
+            transition: all 0.15s ease;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div
+            class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-gray-200 mb-8">
+            <div class="flex items-center gap-3">
+                <img src="https://ayesha-mall.netlify.app/logo.png" 
+                     alt="AyeshaMall Logo" 
+                     class="w-12 h-12 rounded-xl object-contain">
+            
+                <div>
+                    <h1
+                        class="text-3xl font-extrabold bg-gradient-to-r from-purple-700 to-pink-600 bg-clip-text text-transparent">
+                         AyeshaMall Websites meta Data Manager
+                    </h1>
+            
+                    <p class="text-gray-500 mt-1">
+                        Manage shopMeta — edit website, about, contact, privacy policy & sync with Firestore + IndexedDB
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button id="importFromFirestoreBtn"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2"><i
+                        class="fas fa-cloud-download-alt"></i> Import from Cloud</button>
+                <button id="syncToFirestoreBtn"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2"><i
+                        class="fas fa-cloud-upload-alt"></i> Sync to Cloud</button>
+            </div>
+        </div>
+
+        <!-- Main Editor Grid: 2 columns (left: website + about, right: contact + privacy) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- LEFT PANEL -->
+            <div class="space-y-6">
+                <!-- Website Card -->
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden card-hover">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="font-bold text-xl text-gray-800"><i class="fas fa-globe text-indigo-500 mr-2"></i>
+                            Website Settings</h2>
+                        <span class="text-xs text-gray-400">editable fields</span>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div><label class="block text-sm font-semibold text-gray-700">Site Name</label><input
+                                type="text" id="website_name"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-300 outline-none">
+                        </div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Tagline</label><input type="text"
+                                id="website_tagline"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-300">
+                        </div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Description</label><textarea
+                                id="website_description" rows="2"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-300"></textarea>
+                        </div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Logo Path</label><input
+                                type="text" id="website_logo"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"></div>
+                    </div>
+                </div>
+
+                <!-- About Card (title + description) -->
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 card-hover">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                        <h2 class="font-bold text-xl text-gray-800"><i
+                                class="fas fa-info-circle text-purple-500 mr-2"></i> About Section</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div><label class="block text-sm font-semibold text-gray-700">About Title</label><input
+                                type="text" id="about_title"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700">About Description (supports line
+                                breaks)</label><textarea id="about_description" rows="6"
+                                class="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 font-mono text-sm"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="space-y-6">
+                <!-- Contact Card -->
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 card-hover">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                        <h2 class="font-bold text-xl text-gray-800"><i
+                                class="fas fa-address-card text-blue-500 mr-2"></i> Contact Details</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div><label class="block text-sm font-semibold text-gray-700">Contact Title</label><input
+                                type="text" id="contact_title" class="w-full border rounded-lg px-4 py-2"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Email</label><input type="email"
+                                id="contact_email" class="w-full border rounded-lg px-4 py-2"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Phone</label><input type="text"
+                                id="contact_phone" class="w-full border rounded-lg px-4 py-2"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Address</label><input type="text"
+                                id="contact_address" class="w-full border rounded-lg px-4 py-2"></div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div><label class="text-xs font-semibold">Facebook URL</label><input type="url"
+                                    id="social_fb" placeholder="https://facebook.com/..."
+                                    class="w-full border rounded-lg px-2 py-1 text-sm"></div>
+                            <div><label class="text-xs font-semibold">Instagram</label><input type="url" id="social_ig"
+                                    placeholder="https://instagram.com/..."
+                                    class="w-full border rounded-lg px-2 py-1 text-sm"></div>
+                            <div><label class="text-xs font-semibold">WhatsApp</label><input type="url" id="social_wa"
+                                    placeholder="https://wa.me/..." class="w-full border rounded-lg px-2 py-1 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Policy Card -->
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 card-hover">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                        <h2 class="font-bold text-xl text-gray-800"><i
+                                class="fas fa-shield-alt text-green-600 mr-2"></i> Privacy Policy</h2>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <div><label class="block text-sm font-semibold text-gray-700">Privacy Title</label><input
+                                type="text" id="privacy_title" class="w-full border rounded-lg px-4 py-2"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700">Policy Content</label><textarea
+                                id="privacy_content" rows="4"
+                                class="w-full border rounded-lg px-4 py-2 font-mono text-sm"></textarea></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons Bar: Save locally / Export / Reset to default -->
+        <div class="mt-10 flex flex-wrap gap-4 justify-center border-t pt-8">
+            <button id="saveToLocalBtn"
+                class="bg-slate-800 hover:bg-black text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i
+                    class="fas fa-database"></i> 💾 Save to IndexedDB (local)</button>
+            <button id="exportMetaBtn"
+                class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i
+                    class="fas fa-file-export"></i> 📄 Export shopMeta.js</button>
+            <button id="resetDefaultBtn"
+                class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"><i
+                    class="fas fa-undo-alt"></i> Reset to default Meta</button>
+        </div>
+
+        <!-- preview card: show live shopMeta structure snapshot -->
+        <div class="mt-8 bg-gray-900 rounded-2xl p-5 text-gray-200 overflow-auto">
+            <div class="flex justify-between items-center mb-2"><span class="text-sm font-mono text-gray-400"><i
+                        class="fas fa-code mr-2"></i>Current shopMeta Snapshot (live from editor)</span><span
+                    id="lastSavedBadge" class="text-xs bg-gray-700 px-2 py-1 rounded-full">not saved</span></div>
+            <pre id="livePreview"
+                class="text-xs font-mono whitespace-pre-wrap break-words bg-gray-800 p-3 rounded-lg max-h-64 overflow-auto">Loading...</pre>
+        </div>
+    </div>
+
+    <script type="module">
+        // ------------------------------
+        // 1. DEFAULT SHOP META (original structure)
+        // ------------------------------
+        const DEFAULT_SHOP_META = {
+            website: { name: "8th Wonder Bazaar", tagline: "Where Every Purchase is a Wonder ✨", description: "Discover the magic of premium shopping with curated collections.", logo: "image/logo.png" },
+            about: { title: "✨ About 8th Wonder", description: "We provide high-quality products at your doorstep with fast delivery and trusted service. Our mission is to make shopping easy and reliable for everyone.\n\n🌟 Our Story:\nBorn from a passion to revolutionize online shopping, 8th Wonder brings you curated collections from around the globe.\n\n💎 Our Promise:\n• 100% Authentic Products\n• Secure Payments\n• 24/7 Customer Support\n• Easy Returns" },
+            contact: { title: "📞 Contact Us", email: "support@8thwonder.shop", phone: "+92-300-8889999", address: "8th Wonder Tower, Main Boulevard, Gulberg III, Karachi, Pakistan", social: { facebook: "https://facebook.com/8thwonder", instagram: "https://instagram.com/8thwonder", whatsapp: "https://wa.me/923008889999" } },
+            privacyPolicy: { title: "🔒 Privacy Policy", content: "We respect your privacy. Your data is safe with us. We collect only necessary info to process orders. No third-party sharing. Secure encrypted transactions." }
+        };
+
+        // ---------- IndexedDB Setup (Dexie) ----------
+        const db = new Dexie("AyeshaMallDB");
+        db.version(1).stores({
+            shopMeta: "id, updatedAt"   // only one record with id = 'main'
+        });
+
+        // Helper: load current meta from IndexedDB or fallback to default & populate form
+        async function loadFromIndexedDB() {
+            let record = await db.shopMeta.get('main');
+            if (!record || !record.data) {
+                // initialize with default
+                const defaultData = JSON.parse(JSON.stringify(DEFAULT_SHOP_META));
+                await db.shopMeta.put({ id: 'main', data: defaultData, updatedAt: Date.now() });
+                return defaultData;
+            }
+            return record.data;
+        }
+
+        // Sync current UI values to a meta object
+        function gatherFormData() {
+            const meta = {
+                website: {
+                    name: document.getElementById('website_name').value,
+                    tagline: document.getElementById('website_tagline').value,
+                    description: document.getElementById('website_description').value,
+                    logo: document.getElementById('website_logo').value
+                },
+                about: {
+                    title: document.getElementById('about_title').value,
+                    description: document.getElementById('about_description').value
+                },
+                contact: {
+                    title: document.getElementById('contact_title').value,
+                    email: document.getElementById('contact_email').value,
+                    phone: document.getElementById('contact_phone').value,
+                    address: document.getElementById('contact_address').value,
+                    social: {
+                        facebook: document.getElementById('social_fb').value,
+                        instagram: document.getElementById('social_ig').value,
+                        whatsapp: document.getElementById('social_wa').value
+                    }
+                },
+                privacyPolicy: {
+                    title: document.getElementById('privacy_title').value,
+                    content: document.getElementById('privacy_content').value
+                }
+            };
+            return meta;
+        }
+
+        // Populate all form fields from a meta object
+        function populateForm(meta) {
+            document.getElementById('website_name').value = meta.website?.name || '';
+            document.getElementById('website_tagline').value = meta.website?.tagline || '';
+            document.getElementById('website_description').value = meta.website?.description || '';
+            document.getElementById('website_logo').value = meta.website?.logo || '';
+            document.getElementById('about_title').value = meta.about?.title || '';
+            document.getElementById('about_description').value = meta.about?.description || '';
+            document.getElementById('contact_title').value = meta.contact?.title || '';
+            document.getElementById('contact_email').value = meta.contact?.email || '';
+            document.getElementById('contact_phone').value = meta.contact?.phone || '';
+            document.getElementById('contact_address').value = meta.contact?.address || '';
+            document.getElementById('social_fb').value = meta.contact?.social?.facebook || '';
+            document.getElementById('social_ig').value = meta.contact?.social?.instagram || '';
+            document.getElementById('social_wa').value = meta.contact?.social?.whatsapp || '';
+            document.getElementById('privacy_title').value = meta.privacyPolicy?.title || '';
+            document.getElementById('privacy_content').value = meta.privacyPolicy?.content || '';
+            updatePreview(meta);
+        }
+
+        function updatePreview(meta) {
+            const preElem = document.getElementById('livePreview');
+            preElem.textContent = JSON.stringify(meta, null, 2);
+        }
+
+        // Save to IndexedDB and update badge
+        async function saveCurrentToLocalDB() {
+            const currentMeta = gatherFormData();
+            await db.shopMeta.put({ id: 'main', data: currentMeta, updatedAt: Date.now() });
+            document.getElementById('lastSavedBadge').innerHTML = '<i class="fas fa-check-circle text-green-400"></i> Saved locally ' + new Date().toLocaleTimeString();
+            setTimeout(() => {
+                if (document.getElementById('lastSavedBadge').innerHTML.includes('Saved locally'))
+                    document.getElementById('lastSavedBadge').innerHTML = 'local snapshot ready';
+            }, 2000);
+            updatePreview(currentMeta);
+            showToast("✅ Data saved to IndexedDB (instant queries ready)");
+            return currentMeta;
+        }
+
+        // Reset to default meta + save to IndexedDB
+        async function resetToDefault() {
+            const freshDefault = JSON.parse(JSON.stringify(DEFAULT_SHOP_META));
+            populateForm(freshDefault);
+            await db.shopMeta.put({ id: 'main', data: freshDefault, updatedAt: Date.now() });
+            updatePreview(freshDefault);
+            document.getElementById('lastSavedBadge').innerHTML = '🔄 Reset to default';
+            showToast("✨ Reset to original 8th Wonder Bazaar meta");
+        }
+
+        let firestoreDb = null;
+        let firebaseApp = null;
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDummyKeyReplaceWithRealKeyForFirestore",  // <-- Replace with actual firebase config OR handle gracefully
+            authDomain: "ayeshamall-demo.firebaseapp.com",
+            projectId: "ayeshamall-demo",
+            storageBucket: "ayeshamall-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
+        };
+        // We'll try to initialize but if fails (invalid key) we show a warning but still allow IndexedDB.
+        // Default is that we can still use cloud sync if configured properly.
+        async function initFirebase() {
+            try {
+                const { initializeApp, getFirestore, doc, setDoc, getDoc } = window.firebaseModules;
+                firebaseApp = initializeApp(FIREBASE_CONFIG);
+                firestoreDb = getFirestore(firebaseApp);
+                console.log("Firestore initialised (check config)");
+                return true;
+            } catch (err) {
+                console.warn("Firebase init failed: ", err.message);
+                showToast("⚠️ Firebase config invalid. Cloud sync disabled. Please update FIREBASE_CONFIG with your Firestore project.", 4000);
+                return false;
+            }
+        }
+
+        // Sync current editor data to Firestore (doc path: shops/ayeshamall_meta)
+        async function syncToCloud() {
+            if (!firestoreDb) {
+                const initOk = await initFirebase();
+                if (!initOk) { showToast("❌ Cloud unavailable: Firebase config missing", 3000); return; }
+            }
+            try {
+                const { setDoc, doc } = window.firebaseModules;
+                const currentMeta = gatherFormData();
+                const docRef = doc(firestoreDb, "shopMeta", "ayeshamall_config");
+                await setDoc(docRef, { data: currentMeta, lastUpdated: new Date().toISOString(), version: 1 });
+                showToast("☁️ Data synced to Firestore successfully!");
+                document.getElementById('lastSavedBadge').innerHTML = '☁️ Synced to Cloud • ' + new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error(err);
+                showToast("Firestore sync error: " + err.message, 4000);
+            }
+        }
+
+        // Import from Firestore (overwrites current form & local DB)
+        async function importFromCloud() {
+            if (!firestoreDb) {
+                const initOk = await initFirebase();
+                if (!initOk) { showToast("❌ Firestore not available, check config", 3000); return; }
+            }
+            try {
+                const { getDoc, doc } = window.firebaseModules;
+                const docRef = doc(firestoreDb, "shopMeta", "ayeshamall_config");
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const cloudData = snap.data().data;
+                    if (cloudData && typeof cloudData === 'object') {
+                        populateForm(cloudData);
+                        await db.shopMeta.put({ id: 'main', data: cloudData, updatedAt: Date.now() });
+                        updatePreview(cloudData);
+                        showToast("🌥️ Imported latest shopMeta from Firestore!");
+                        document.getElementById('lastSavedBadge').innerHTML = '☁️ Cloud import success';
+                    } else { throw new Error("Invalid structure in cloud"); }
+                } else {
+                    showToast("No document found in Firestore. Create by syncing first.", 3000);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Import failed: " + err.message, 4000);
+            }
+        }
+
+        // Generate export as shopMeta.js script file (download)
+        function exportAsShopMetaJS() {
+            const currentMeta = gatherFormData();
+            const exportContent = `// shopMeta.js - AyeshaMall custom data manager\nexport const shopMeta = ${JSON.stringify(currentMeta, null, 2)};\n\n// Optional: default export\n// export default shopMeta;`;
+            const blob = new Blob([exportContent], { type: "application/javascript" });
+            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = "shopMeta.js";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("📁 shopMeta.js exported! Ready to import in your projects.");
+        }
+
+        // Toast notification helper
+        function showToast(msg, duration = 2500) {
+            let toast = document.querySelector('.toast-notify');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.className = 'toast-notify';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<i class="fas fa-bell mr-2"></i> ${msg}`;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, duration);
+        }
+
+        // Initial load: get from IndexedDB and populate
+        async function bootstrap() {
+            await initFirebase();   // try silently, cloud buttons will handle if fails
+            const localMeta = await loadFromIndexedDB();
+            populateForm(localMeta);
+            updatePreview(localMeta);
+            document.getElementById('lastSavedBadge').innerHTML = '📀 IndexedDB ready';
+            // add event listeners for real-time preview sync on any input change
+            const allInputs = document.querySelectorAll('input, textarea');
+            allInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    const fresh = gatherFormData();
+                    updatePreview(fresh);
+                });
+            });
+        }
+
+        // Bind Buttons
+        document.getElementById('saveToLocalBtn').addEventListener('click', saveCurrentToLocalDB);
+        document.getElementById('resetDefaultBtn').addEventListener('click', resetToDefault);
+        document.getElementById('exportMetaBtn').addEventListener('click', exportAsShopMetaJS);
+        document.getElementById('syncToFirestoreBtn').addEventListener('click', syncToCloud);
+        document.getElementById('importFromFirestoreBtn').addEventListener('click', importFromCloud);
+
+        bootstrap().catch(console.error);
+    </script>
+</body>
+
+</html>
